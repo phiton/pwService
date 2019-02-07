@@ -1,7 +1,6 @@
 package main
 
-import
-(
+import (
     "fmt"
     "log"
     "net/http"
@@ -80,7 +79,7 @@ func marshalPasswdFromFile(w http.ResponseWriter, filePath string) (allEntries U
 func allUserInfos(w http.ResponseWriter, r *http.Request) {
 
     fmt.Println("GET Endpoint Hit: /users")
-    allEntries := marshalPasswdFromFile(w, "/etc/passwd_test")
+    allEntries := marshalPasswdFromFile(w, "/etc/passwd")
     if (allEntries != nil) {
         printJSON(w, allEntries)
     }
