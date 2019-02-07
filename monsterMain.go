@@ -8,7 +8,7 @@ import (
     "encoding/csv"
     "github.com/gorilla/mux"  //for extensibility purposes
     "os"
-    // "strconv"
+    "strings"
 )
 
 type UserInfo struct {
@@ -20,7 +20,14 @@ type UserInfo struct {
     Shell string `json:"shell"`
 }
 
+type GroupInfo struct {
+    Name string `json:"name"`
+    Gid string `json:"gid"`
+    Members []string `json:"members"`
+}
+
 type UserInfos [] UserInfo
+type GroupInfos [] GroupInfo
 
 func printJSON(w http.ResponseWriter, allEntries UserInfos ) {
     //json.NewEncoder(w).Encode(allEntries)   //use this for non-pretty print
@@ -52,7 +59,7 @@ func getFileData(w http.ResponseWriter, filePath string) (csvData [][]string) {
     return csvData
 }
 
-func marshalPasswd(w http.ResponseWriter, csvData [][]string, filePath string) (allEntries UserInfos){
+func decodePasswd(w http.ResponseWriter, csvData [][]string, filePath string) (allEntries UserInfos){
 
     var oneEntry UserInfo
     var lineNumber = 0
@@ -117,7 +124,7 @@ func compareWithQuery (params UserInfo, dataRecord UserInfo) (isMatch bool) {
     return true
 }
 
-func marshalPasswdWithQuery(w http.ResponseWriter, csvData [][]string, filePath string ,params UserInfo) (queriedEntries UserInfos) {
+func decodePasswdWithQuery(w http.ResponseWriter, csvData [][]string, filePath string ,params UserInfo) (queriedEntries UserInfos) {
     var oneEntry UserInfo
     //var allEntries UserInfos
     var lineNumber = 0
@@ -159,7 +166,7 @@ func allUserInfos(w http.ResponseWriter, r *http.Request) {
 
     filePath := "/etc/passwd"
     csvData := getFileData(w, filePath)
-    allEntries := marshalPasswd(w, csvData, filePath)
+    allEntries := decodePasswd(w, csvData, filePath)
     if (allEntries != nil) {
         printJSON(w, allEntries)
     }
@@ -189,9 +196,6 @@ func queryUserInfos(w http.ResponseWriter, r *http.Request) {
     filePath := "/etc/passwd"
 
     urlQueryParams := r.URL.Query()
-    // fmt.Println(urlQueryParams)
-    // fmt.Println(urlQueryParams.Get("name"))
-    // fmt.Println("uid =" + urlQueryParams.Get("uid"))
 
     invalidParams := validateParams(urlQueryParams)
     if len(invalidParams) !=0 {
@@ -208,7 +212,7 @@ func queryUserInfos(w http.ResponseWriter, r *http.Request) {
     queriedParams.Shell = urlQueryParams.Get("shell")
 
     csvData := getFileData(w, filePath)
-    queriedEntries := marshalPasswdWithQuery(w, csvData, filePath, queriedParams)
+    queriedEntries := decodePasswdWithQuery(w, csvData, filePath, queriedParams)
     if (queriedEntries != nil && len(queriedEntries) != 0) {
         printJSON(w, queriedEntries)
     } else {
@@ -222,10 +226,11 @@ func homePage(w http.ResponseWriter, r *http.Request) {
     fmt.Println("Endpoint Hit: homePage")
 }
 
-func retrieveUserInfo (w http.ResponseWriter, csvData [][]string, filePath string ,uid string) (matchingEntries UserInfos) {
+func retrieveUserInfoFromUid (w http.ResponseWriter, csvData [][]string, filePath string ,uid string) (matchingEntryPtr *UserInfo) {
 
     var lineNumber = 0
     var matchingEntry UserInfo
+    matchingEntryPtr = nil
     for _, each := range csvData {
 
         lineNumber++
@@ -233,13 +238,14 @@ func retrieveUserInfo (w http.ResponseWriter, csvData [][]string, filePath strin
             continue
         }
 
-        if len(each) != 7 {
-            fmt.Fprintf(w, "Error! passwd file may be corrupt!" +
-                " Found entry with %d fields on line:%d.", len(each), lineNumber)
-            fmt.Println("Error!:", filePath,  "file may be corrupt")
-            matchingEntries = nil
-            break
-        }
+        //NEED TO IMPLEMENT CHECK HERE FOR CORRUPT FILE!!
+        // if len(each) != 7 {
+        //     fmt.Fprintf(w, "Error! passwd file may be corrupt!" +
+        //         " Found entry with %d fields on line:%d.", len(each), lineNumber)
+        //     fmt.Println("Error!:", filePath,  "file may be corrupt")
+        //     matchingEntries = nil
+        //     break
+        // }
 
         if (each[2] == uid){
             matchingEntry.Name = each[0]
@@ -248,11 +254,11 @@ func retrieveUserInfo (w http.ResponseWriter, csvData [][]string, filePath strin
             matchingEntry.Comment = each[4]
             matchingEntry.Home = each[5]
             matchingEntry.Shell = each[6]
-            matchingEntries = append(matchingEntries, matchingEntry)
+            matchingEntryPtr = &matchingEntry
             break
         }
     }
-    return matchingEntries
+    return matchingEntryPtr
 }
 
 func uidUser(w http.ResponseWriter, r *http.Request) {
@@ -263,11 +269,180 @@ func uidUser(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     uid := vars["uid"]
 
-    myUserInfo := retrieveUserInfo(w, csvData, filePath, uid )
-    if (myUserInfo != nil) && (len(myUserInfo) > 0){
-        printJSON(w, myUserInfo)
+    myUserInfo := retrieveUserInfoFromUid(w, csvData, filePath, uid )
+    if (myUserInfo != nil){
+        // printJSON(w, myUserInfo)   //TODO - CLEANUP?
+        jsonEntry := json.NewEncoder(w)
+        jsonEntry.SetIndent("", "    ")
+        jsonEntry.Encode(myUserInfo)
     } else {
-        fmt.Fprintf(w, " Unable to find matching entry with uid=" + uid)
+        fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with uid=" + uid)
+    }
+}
+
+func retrieveGroupsFromUser(w http.ResponseWriter, csvData [][]string, filePath string ,userName string) (groupEntries GroupInfos) {
+    var oneEntry GroupInfo
+    var foundMatch bool
+    //var allEntries UserInfos
+    var lineNumber = 0
+
+    for _, each := range csvData {
+
+        foundMatch = false
+        lineNumber++
+        if each[0][0] == '#' {
+            continue
+        }
+
+        if len(each) != 4 {
+            fmt.Fprintf(w, "Error! group file may be corrupt!" +
+                " Found entry with %d fields on line:%d.", len(each), lineNumber)
+            fmt.Println("Error!:", filePath,  "file may be corrupt")
+            groupEntries = nil
+            break
+        }
+        oneEntry.Name = each[0]
+        oneEntry.Gid = each[2]
+        // Not all Gid matches from /etc/passwd show up in /etc/group file...
+        // if we want to add the primary Gid from /etc/passwd, we will need to compare
+        // it with this Gid and if they match, include it in the groupEntries
+
+        oneEntry.Members = strings.Split(each[3], ",")
+
+        for _, element := range oneEntry.Members {
+            fmt.Println(element)
+            if element == userName {
+                foundMatch = true
+            }
+        }
+
+        if foundMatch == true {
+            groupEntries = append(groupEntries, oneEntry)
+        }
+
+    }
+    return groupEntries
+}
+
+func uidGroupInfo(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("GET Endpoint Hit: /users/{uid}/groups")
+    passwdFilePath := "/etc/passwd"
+    groupFilePath := "/etc/group"
+
+    csvDataPasswd := getFileData(w, passwdFilePath)
+    csvDataGroups := getFileData(w, groupFilePath)
+    vars := mux.Vars(r)
+    uid := vars["uid"]
+
+    myUserInfo := retrieveUserInfoFromUid(w, csvDataPasswd, passwdFilePath, uid)
+    if (myUserInfo != nil) {
+        myUserName := (*myUserInfo).Name
+
+        myUserGroupInfos := retrieveGroupsFromUser(w, csvDataGroups, groupFilePath, myUserName)
+        if (myUserGroupInfos != nil){
+            // printJSON(w, myUserInfo)   //TODO - CLEANUP?
+            jsonEntry := json.NewEncoder(w)
+            jsonEntry.SetIndent("", "    ")
+            jsonEntry.Encode(myUserGroupInfos)
+        }
+    } else {
+        fmt.Fprintf (w, "404 page not found. \n Unable to find matchign entry with uid=" + uid)
+    }
+}
+
+func decodeGroup(w http.ResponseWriter, csvData [][]string, filePath string ) (groupEntries GroupInfos) {
+    var oneEntry GroupInfo
+    var lineNumber = 0
+
+    for _, each := range csvData {
+
+        lineNumber++
+        if each[0][0] == '#' {
+            continue
+        }
+
+        if len(each) != 4 {
+            fmt.Fprintf(w, "Error! group file may be corrupt!" +
+                " Found entry with %d fields on line:%d.", len(each), lineNumber)
+            fmt.Println("Error!:", filePath,  "file may be corrupt")
+            groupEntries = nil
+            break
+        }
+        oneEntry.Name = each[0]
+        oneEntry.Gid = each[2]
+        // Not all Gid matches from /etc/passwd show up in /etc/group file...
+        // if we want to add the primary Gid from /etc/passwd, we will need to compare
+        // it with this Gid and if they match, include it in the groupEntries
+
+        oneEntry.Members = strings.Split(each[3], ",")
+
+        groupEntries = append(groupEntries, oneEntry)
+
+    }
+    return groupEntries
+}
+
+func allGroupInfos(w http.ResponseWriter, r *http.Request){
+    fmt.Println("GET Endpoint Hit: /groups")
+
+    filePath := "/etc/group"
+    csvData := getFileData(w, filePath)
+    allGroupEntries := decodeGroup(w, csvData, filePath)
+    if (allGroupEntries != nil) {
+        //printJSON(w, allEntries) // TODO -CLEANUP
+        jsonEntry := json.NewEncoder(w)
+        jsonEntry.SetIndent("", "    ")
+        jsonEntry.Encode(allGroupEntries)
+    }
+}
+
+func retrieveGroupInfoFromGid(w http.ResponseWriter, csvData [][]string, filePath string ,gid string) (matchingEntryPtr *GroupInfo) {
+
+    var lineNumber = 0
+    var matchingEntry GroupInfo
+    matchingEntryPtr = nil
+    for _, each := range csvData {
+
+        lineNumber++
+        if each[0][0] == '#' {
+            continue
+        }
+
+        //NEED TO IMPLEMENT CHECK HERE FOR CORRUPT FILE!!
+        // if len(each) != 7 {
+        //     fmt.Fprintf(w, "Error! passwd file may be corrupt!" +
+        //         " Found entry with %d fields on line:%d.", len(each), lineNumber)
+        //     fmt.Println("Error!:", filePath,  "file may be corrupt")
+        //     matchingEntries = nil
+        //     break
+        // }
+
+        if (each[2] == gid){
+            matchingEntry.Name = each[0]
+            matchingEntry.Gid = each[2]
+            matchingEntry.Members = strings.Split(each[3], ",")
+            matchingEntryPtr = &matchingEntry
+            break
+        }
+    }
+    return matchingEntryPtr
+}
+
+func gidGroup(w http.ResponseWriter, r *http.Request){
+    fmt.Println("GET Endpoint Hit: /groups/{gid}")
+    groupFilePath := "/etc/group"
+    csvDataGroups := getFileData(w, groupFilePath)
+    vars := mux.Vars(r)
+    gid := vars["gid"]
+
+    myGroupInfo := retrieveGroupInfoFromGid(w, csvDataGroups, groupFilePath, gid )
+    if (myGroupInfo != nil){
+        // printJSON(w, myUserInfo)   //TODO - CLEANUP?
+        jsonEntry := json.NewEncoder(w)
+        jsonEntry.SetIndent("", "    ")
+        jsonEntry.Encode(myGroupInfo)
+    } else {
+        fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with gid=" + gid)
     }
 }
 
@@ -279,6 +454,10 @@ func handleRequests() {
     myRouter.HandleFunc("/users", allUserInfos).Methods("GET")
     myRouter.HandleFunc("/users/{uid}", uidUser).Methods("GET")
     myRouter.HandleFunc("/users/query", queryUserInfos).Methods("GET")
+
+    myRouter.HandleFunc("/users/{uid}/groups", uidGroupInfo).Methods("GET")
+    myRouter.HandleFunc("/groups", allGroupInfos).Methods("GET")
+    myRouter.HandleFunc("/groups/{gid}", gidGroup).Methods("GET")
     log.Fatal(http.ListenAndServe(":8081", myRouter))
 }
 
