@@ -8,6 +8,7 @@ import (
     "encoding/csv"
     "github.com/gorilla/mux"  //for extensibility purposes
     "os"
+    // "strconv"
 )
 
 type UserInfo struct {
@@ -54,7 +55,6 @@ func getFileData(w http.ResponseWriter, filePath string) (csvData [][]string) {
 func marshalPasswd(w http.ResponseWriter, csvData [][]string, filePath string) (allEntries UserInfos){
 
     var oneEntry UserInfo
-    //var allEntries UserInfos
     var lineNumber = 0
     for _, each := range csvData {
 
@@ -222,10 +222,54 @@ func homePage(w http.ResponseWriter, r *http.Request) {
     fmt.Println("Endpoint Hit: homePage")
 }
 
-// func uidUser(w http.ResponseWriter, r *http.Request) {
-//     fmt.Println("GET Endpoint Hit: /users/{uid}")
-//     filePath := "/etc/passwd"
-// }
+func retrieveUserInfo (w http.ResponseWriter, csvData [][]string, filePath string ,uid string) (matchingEntries UserInfos) {
+
+    var lineNumber = 0
+    var matchingEntry UserInfo
+    for _, each := range csvData {
+
+        lineNumber++
+        if each[0][0] == '#' {
+            continue
+        }
+
+        if len(each) != 7 {
+            fmt.Fprintf(w, "Error! passwd file may be corrupt!" +
+                " Found entry with %d fields on line:%d.", len(each), lineNumber)
+            fmt.Println("Error!:", filePath,  "file may be corrupt")
+            matchingEntries = nil
+            break
+        }
+
+        if (each[2] == uid){
+            matchingEntry.Name = each[0]
+            matchingEntry.Uid = each[2]
+            matchingEntry.Gid = each[3]
+            matchingEntry.Comment = each[4]
+            matchingEntry.Home = each[5]
+            matchingEntry.Shell = each[6]
+            matchingEntries = append(matchingEntries, matchingEntry)
+            break
+        }
+    }
+    return matchingEntries
+}
+
+func uidUser(w http.ResponseWriter, r *http.Request) {
+    fmt.Println("GET Endpoint Hit: /users/{uid}")
+    filePath := "/etc/passwd"
+
+    csvData := getFileData(w, filePath)
+    vars := mux.Vars(r)
+    uid := vars["uid"]
+
+    myUserInfo := retrieveUserInfo(w, csvData, filePath, uid )
+    if (myUserInfo != nil) && (len(myUserInfo) > 0){
+        printJSON(w, myUserInfo)
+    } else {
+        fmt.Fprintf(w, " Unable to find matching entry with uid=" + uid)
+    }
+}
 
 func handleRequests() {
 
@@ -233,7 +277,7 @@ func handleRequests() {
 
     myRouter.HandleFunc("/", homePage)
     myRouter.HandleFunc("/users", allUserInfos).Methods("GET")
-    // myRouter.HandleFunc("/users/{uid}", uidUser).Methods("GET")
+    myRouter.HandleFunc("/users/{uid}", uidUser).Methods("GET")
     myRouter.HandleFunc("/users/query", queryUserInfos).Methods("GET")
     log.Fatal(http.ListenAndServe(":8081", myRouter))
 }
