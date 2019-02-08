@@ -82,7 +82,7 @@ func decodePasswdWithQuery( csvData [][]string, params UserInfo) (queriedEntries
 		oneEntry.Home = each[5]
 		oneEntry.Shell = each[6]
 
-		isMatch := compareUserQuery(params, oneEntry)
+		isMatch := compareUserInfo(params, oneEntry)
 
 		if isMatch {
 			queriedEntries = append(queriedEntries, oneEntry)
@@ -92,7 +92,7 @@ func decodePasswdWithQuery( csvData [][]string, params UserInfo) (queriedEntries
 
 }
 
-func compareUserQuery(params UserInfo, dataRecord UserInfo) (isMatch bool) {
+func compareUserInfo(params UserInfo, dataRecord UserInfo) (isMatch bool) {
 
 	if params.Name != "" {
 		if params.Name != dataRecord.Name {

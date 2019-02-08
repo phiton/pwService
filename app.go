@@ -4,6 +4,7 @@ import (
     "net/http"
     "log"
     "fmt"
+    "strings"
     "github.com/gorilla/mux" //for extensibility purposes
 )
 
@@ -72,8 +73,9 @@ func (a *App)getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
 
 	invalidParams := validateUserParams(urlQueryParams)
 	if len(invalidParams) != 0 {
-		fmt.Fprintf(w, "Error! invalid query parameters given:", invalidParams)
-		fmt.Println("Error! invalid query parameters given:", invalidParams)
+        invalidParamsString := strings.Join(invalidParams, " ")
+		fmt.Fprintf(w, "Error! invalid query parameters given: " + invalidParamsString)
+		fmt.Println("Error! invalid query parameters given: " + invalidParamsString)
         return
 	}
 

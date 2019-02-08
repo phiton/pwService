@@ -32,7 +32,6 @@ func TestGetFileData(t* testing.T){
 }
 
 func TestDecodePasswd(t* testing.T){
-    //passwdTestPath := "./
     passwdData, err := getFileData(passwdTestPath)
     allEntries, err := decodePasswd(passwdData)
     if err != nil {
@@ -41,4 +40,62 @@ func TestDecodePasswd(t* testing.T){
     if len(allEntries) != 2 {
         t.Errorf ("passwdTest file gave back more entries than expected. Expected: 2, Actual:" + strconv.Itoa(len(allEntries)))
     }
+}
+
+func TestDecodePasswdWithQuery(t* testing.T) {
+    var queriedParams UserInfo
+	queriedParams.Name = "nobody"
+	queriedParams.Uid = "-2"
+	queriedParams.Gid = "-2"
+	queriedParams.Comment = "Unprivileged User"
+	queriedParams.Home = "/var/empty"
+	queriedParams.Shell = "/usr/bin/false"
+
+    csvData, err := getFileData(passwdTestPath)
+
+    queriedEntries, err := decodePasswdWithQuery(csvData, queriedParams)
+    if err != nil || queriedEntries == nil{
+        t.Errorf(err.Error())
+    }
+
+    if (len(queriedEntries) != 1) {
+        t.Errorf("number of matches incorrect. Expected: 1, Actual:" + strconv.Itoa(len(queriedEntries)))
+    }
+}
+
+func TestCompareUserInfo(t* testing.T) {
+    var oneInfo UserInfo
+    var twoInfo UserInfo
+    var twoInfoCopy UserInfo
+
+    oneInfo.Name = "name1"
+    oneInfo.Uid = "1"
+    oneInfo.Gid = "1"
+	oneInfo.Comment = "Unprivileged User"
+	oneInfo.Home = "/var/empty"
+	oneInfo.Shell = "/usr/bin/false"
+
+    twoInfo.Name = "name2"
+    twoInfo.Uid = "2"
+    twoInfo.Gid = "2"
+	twoInfo.Comment = "number2"
+	twoInfo.Home = "/var/two"
+	twoInfo.Shell = "/usr/bin/two"
+
+    twoInfoCopy.Name = "name2"
+    twoInfoCopy.Uid = "2"
+    twoInfoCopy.Gid = "2"
+	twoInfoCopy.Comment = "number2"
+	twoInfoCopy.Home = "/var/two"
+	twoInfoCopy.Shell = "/usr/bin/two"
+
+    isMatch := compareUserInfo(oneInfo, twoInfo)
+    if (isMatch == true) {
+        t.Errorf("Received inappropriate match with two different UserInfo structs")
+    }
+    isMatch = compareUserInfo(twoInfo, twoInfoCopy)
+    if (isMatch == false) {
+        t.Errorf("Received inappropriate mismatch with two of the same UserInfo structs")
+    }
+
 }
