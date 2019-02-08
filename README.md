@@ -14,7 +14,7 @@ Start up an HTTP service which exposes contents of the systems passwd and groups
             ex: ./pwService -p=/etc/myPasswdFile -g=/etc/myGroupFile
   
 # How to access the service:
-The service can be accessed via any webbrowser and runs on port 8081. The url will be localhost:8081.
+The service can be accessed via any webbrowser and runs on port 8081. The url will be localhost:8081. Another viable option is postman.
 
 # Available methods:
  
