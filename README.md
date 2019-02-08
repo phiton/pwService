@@ -1,4 +1,4 @@
-# password as a service - This starts up an HTTP service which anyone can query via the API to access contents of the systems passwd and groups.
+# password as a service - Start up an HTTP service which exposes contents of the systems passwd and groups.
 
 
 pwService has two optional parameters at the commandline which allows the user to customize the location of the groups and password file of the machine. If the parameters are not present, the default location will be set to /etc/passwd and /etc/group.
@@ -25,6 +25,8 @@ Example Response:
 {“name”: “dwoodlins”, “uid”: 1001, “gid”: 1001, “comment”: “”, “home”:
 “/home/dwoodlins”, “shell”: “/bin/false”}
 ]
+
+
 GET
 /users/query[?name=<nq>][&uid=<uq>][&gid=<gq>][&comment=<cq>][&home=<
 hq>][&shell=<sq>]
@@ -43,6 +45,8 @@ Example Response:
 {“name”: “dwoodlins”, “uid”: 1001, “gid”: 1001, “comment”: “”, “home”:
 “/home/dwoodlins”, “shell”: “/bin/false”}
 ]
+  
+  
 GET /users/<uid>
 Return a single user with <uid>. Return 404 if <uid> is not found.
 Example Response:
@@ -54,6 +58,8 @@ Example Response:
 [
 {“name”: “docker”, “gid”: 1002, “members”: [“dwoodlins”]}
 ]
+  
+  
 GET /groups
 Return a list of all groups on the system, a defined by /etc/group.
 Example Response:
@@ -62,6 +68,8 @@ Example Response:
 [“_analyticsd’,”_networkd”,”_timed”]},
 {“name”: “docker”, “gid”: 1002, “members”: []}
 ]
+
+
 GET
 /groups/query[?name=<nq>][&gid=<gq>][&member=<mq1>[&member=<mq2>][&.
 ..]]
@@ -78,6 +86,8 @@ Example Response:
 {“name”: “_analyticsusers”, “gid”: 250, “members”:
 [“_analyticsd’,”_networkd”,”_timed”]}
 ]
+  
+  
 GET /groups/<gid>
 Return a single group with <gid>. Return 404 if <gid> is not found.
 Example Response:
