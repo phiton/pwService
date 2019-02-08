@@ -9,7 +9,7 @@ Start up an HTTP service which exposes contents of the systems passwd and groups
 # How to run the Service:
 1. Build the executable with the "go build" command while in the main directory.
 2. Run the pwService executable: "./pwService". There is also the -h option: "./pwService -h" to see the help menu
-3. Optional parameters can be used to configure the passwd and group file location. To configure the file locations, the command would look like "./pwService -p=pathOfPasswdFile -g=pathOfGroupFile
+3. Optional parameters can be used to configure the passwd and group file location. To configure the file locations, the command would look like ./pwService -p=pathOfPasswdFile -g=pathOfGroupFile
   
             ex: ./pwService -p=/etc/myPasswdFile -g=/etc/myGroupFile
   
