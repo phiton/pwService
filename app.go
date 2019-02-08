@@ -24,15 +24,13 @@ func (a *App) Initialize(passwdPath string, groupPath string) {
     a.PasswordPath = passwdPath
     a.GroupPath = groupPath
     a.InitializeRoutes()
-
-
 }
 
 func (a *App) InitializeRoutes() {
     a.Router.HandleFunc("/", a.getHomePage)
     a.Router.HandleFunc("/users", a.getAllUserInfos).Methods("GET")
     a.Router.HandleFunc("/users/query", a.getQueryUserInfos).Methods("GET")
-    // a.Router.HandleFunc("/users/{uid}", uidUser).Methods("GET")
+    a.Router.HandleFunc("/users/{uid}", a.getUidUser).Methods("GET")
     //
     // a.Router.HandleFunc("/users/{uid}/groups", uidGroupInfo).Methods("GET")
     // a.Router.HandleFunc("/groups", allGroupInfos).Methods("GET")
@@ -45,7 +43,7 @@ func (a *App) getHomePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
-func (a *App)getAllUserInfos(w http.ResponseWriter, r *http.Request) {
+func (a *App) getAllUserInfos(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("GET Endpoint Hit: /users")
 
@@ -66,7 +64,7 @@ func (a *App)getAllUserInfos(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (a *App)getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
+func (a *App) getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET Endpoint Hit: /users/query")
 
 	urlQueryParams := r.URL.Query()
@@ -105,4 +103,27 @@ func (a *App)getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, " Unable to find matching entry with given query")
 	}
 
+}
+
+func (a *App) getUidUser(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET Endpoint Hit: /users/{uid}")
+
+	csvData, err := getFileData(a.PasswordPath)
+    if err != nil {
+		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
+			" on this system"
+		fmt.Fprintf(w, errorMsg)
+		fmt.Println(err)
+        return
+	}
+
+	vars := mux.Vars(r)
+	uid := vars["uid"]
+
+	myUserInfo, err := retrieveUserInfoFromUid(csvData, uid)
+	if myUserInfo != nil {
+        printJSON(w, myUserInfo)
+	} else {
+		fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with uid="+uid)
+	}
 }

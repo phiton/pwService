@@ -7,11 +7,9 @@ import (
 )
 
 var passwdTestPath string = "./testFiles/passwdTest"
+var fileNotExistPath string = "./testFiles/fileNotExist"
 
-func TestGetFileData(t* testing.T){
-
-    fileNotExistPath := "./testFiles/fileNotExist"
-    //passwdTestPath := "./testFiles/passwdTest"
+func TestGetFileData(t* testing.T) {
 
     passwdData, err := getFileData(fileNotExistPath)
     if err == nil {
@@ -31,7 +29,7 @@ func TestGetFileData(t* testing.T){
 
 }
 
-func TestDecodePasswd(t* testing.T){
+func TestDecodePasswd(t* testing.T) {
     passwdData, err := getFileData(passwdTestPath)
     allEntries, err := decodePasswd(passwdData)
     if err != nil {
@@ -98,4 +96,29 @@ func TestCompareUserInfo(t* testing.T) {
         t.Errorf("Received inappropriate mismatch with two of the same UserInfo structs")
     }
 
+}
+
+func TestRetrieveUserInfoFromUid(t* testing.T) {
+    csvData, _ := getFileData(passwdTestPath)
+    uid := "-2"
+    myUserInfo, _ := retrieveUserInfoFromUid(csvData, uid)
+
+    if myUserInfo.Name != "nobody"{
+        t.Errorf("Incorrect name picked up from passwdTestPath. Expected: nobody, Actual: " + myUserInfo.Name)
+    }
+    if myUserInfo.Uid != "-2" {
+        t.Errorf("Incorrect UID picked up from passwdTestPath. Expected: -2, Actual: " +myUserInfo.Uid)
+    }
+    if myUserInfo.Gid != "-2"{
+        t.Errorf("Incorrect GID picked up from passwdTestPath. Expected: -2, Actual: " + myUserInfo.Gid)
+    }
+    if myUserInfo.Comment != "Unprivileged User" {
+        t.Errorf("Incorrect Comment picked up from passwdTestPath. Expected: Unprivileged User, Actual: " +myUserInfo.Comment)
+    }
+    if myUserInfo.Home != "/var/empty"{
+        t.Errorf("Incorrect Home picked up from passwdTestPath. Expected: /var/empty, Actual: " + myUserInfo.Home)
+    }
+    if myUserInfo.Shell != "/usr/bin/false" {
+        t.Errorf("Incorrect Shell picked up from passwdTestPath. Expected: /usr/bin/false, Actual: " +myUserInfo.Shell)
+    }
 }

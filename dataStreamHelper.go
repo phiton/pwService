@@ -68,13 +68,12 @@ func decodePasswdWithQuery( csvData [][]string, params UserInfo) (queriedEntries
 			continue
 		}
 
-		if len(each) != 7 {
-			errString :=  "Error! passwd file may be corrupt! Found entry with " +
-                           strconv.Itoa(len(each)) + "fields on line:" + strconv.Itoa(index+1)
-			err = errors.New(errString)
-			queriedEntries = nil
-			break
-		}
+        err := validateEntryInPasswdFile(len(each), index)
+        if err != nil {
+            queriedEntries = nil
+            break
+        }
+
 		oneEntry.Name = each[0]
 		oneEntry.Uid = each[2]
 		oneEntry.Gid = each[3]
@@ -126,4 +125,34 @@ func compareUserInfo(params UserInfo, dataRecord UserInfo) (isMatch bool) {
 	}
 
 	return true
+}
+
+func retrieveUserInfoFromUid(csvData [][]string, uid string) (matchingEntryPtr *UserInfo, err error) {
+
+	var matchingEntry UserInfo
+	matchingEntryPtr = nil
+	for index, each := range csvData {
+
+		if each[0][0] == '#' {
+			continue
+		}
+
+        err := validateEntryInPasswdFile(len(each), index)
+        if err != nil {
+            matchingEntryPtr = nil
+            break
+        }
+
+		if each[2] == uid {
+			matchingEntry.Name = each[0]
+			matchingEntry.Uid = each[2]
+			matchingEntry.Gid = each[3]
+			matchingEntry.Comment = each[4]
+			matchingEntry.Home = each[5]
+			matchingEntry.Shell = each[6]
+			matchingEntryPtr = &matchingEntry
+			break
+		}
+	}
+	return matchingEntryPtr, err
 }
