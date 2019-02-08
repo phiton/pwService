@@ -170,3 +170,59 @@ func TestDecodeGroup(t* testing.T) {
         t.Errorf ("Number of entries mismatched. Expected: 0, Actual: " + strconv.Itoa(len(allEntries)))
     }
 }
+
+func TestDecodeGroupWithQuery(t* testing.T) {
+    var queriedParams GroupInfo
+    queriedParams.Name = "nobody"
+    queriedParams.Gid = "-2"
+    myMember := "root"
+    queriedParams.Members = append(queriedParams.Members, myMember)
+
+    csvData, err := getFileData(groupTestPath)
+
+    queriedEntries, err := decodeGroupWithQuery(csvData, queriedParams)
+    if err != nil || queriedEntries == nil{
+        t.Errorf(err.Error())
+    }
+
+    if (len(queriedEntries) != 1) {
+        t.Errorf("number of matches incorrect. Expected: 1, Actual:" + strconv.Itoa(len(queriedEntries)))
+    }
+}
+
+func TestCompareGroupInfo(t* testing.T) {
+    var oneInfo UserInfo
+    var twoInfo UserInfo
+    var twoInfoCopy UserInfo
+
+    oneInfo.Name = "name1"
+    oneInfo.Uid = "1"
+    oneInfo.Gid = "1"
+	oneInfo.Comment = "Unprivileged User"
+	oneInfo.Home = "/var/empty"
+	oneInfo.Shell = "/usr/bin/false"
+
+    twoInfo.Name = "name2"
+    twoInfo.Uid = "2"
+    twoInfo.Gid = "2"
+	twoInfo.Comment = "number2"
+	twoInfo.Home = "/var/two"
+	twoInfo.Shell = "/usr/bin/two"
+
+    twoInfoCopy.Name = "name2"
+    twoInfoCopy.Uid = "2"
+    twoInfoCopy.Gid = "2"
+	twoInfoCopy.Comment = "number2"
+	twoInfoCopy.Home = "/var/two"
+	twoInfoCopy.Shell = "/usr/bin/two"
+
+    isMatch := compareUserInfo(oneInfo, twoInfo)
+    if (isMatch == true) {
+        t.Errorf("Received inappropriate match with two different UserInfo structs")
+    }
+    isMatch = compareUserInfo(twoInfo, twoInfoCopy)
+    if (isMatch == false) {
+        t.Errorf("Received inappropriate mismatch with two of the same UserInfo structs")
+    }
+
+}

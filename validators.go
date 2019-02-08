@@ -24,6 +24,25 @@ func validateUserParams(params map[string][]string) (invalidStrings []string) {
 	return invalidStrings
 }
 
+func validateGroupParams(params map[string][]string) (invalidStrings []string) {
+	validParams := [3]string{"name", "gid", "member"}
+	isValid := false
+
+	for mapKey := range params {
+        isValid = false
+		for _, validParam := range validParams {
+			if mapKey == validParam {
+				isValid = true
+			}
+		}
+		if isValid == false {
+			invalidStrings = append(invalidStrings, mapKey)
+		}
+	}
+
+	return invalidStrings
+}
+
 func validateEntryInPasswdFile (entryLength int, index int) (err error) {
     err = nil
     if entryLength != 7 {

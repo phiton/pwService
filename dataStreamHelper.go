@@ -226,3 +226,90 @@ func decodeGroup( csvData [][]string) (groupEntries GroupInfos, err error) {
 	}
 	return groupEntries, err
 }
+
+func decodeGroupWithQuery(csvData [][]string,  params GroupInfo) (queriedEntries GroupInfos, err error) {
+	var oneEntry GroupInfo
+
+	for index, each := range csvData {
+
+		if each[0][0] == '#' {
+			continue
+		}
+
+		err = validateEntryInGroupFile(len(each), index)
+        if err != nil {
+            queriedEntries = nil
+            break
+        }
+
+		oneEntry.Name = each[0]
+		oneEntry.Gid = each[2]
+		oneEntry.Members = strings.Split(each[3], ",")
+
+		isMatch := compareGroupInfo(params, oneEntry)
+
+		if (isMatch){
+		    queriedEntries = append(queriedEntries, oneEntry)
+		}
+	}
+	return queriedEntries, err
+
+}
+
+func compareGroupInfo (params GroupInfo, dataRecord GroupInfo) (isMatch bool) {
+
+    if (params.Name != ""){
+        if (params.Name != dataRecord.Name) {
+            return false
+        }
+    }
+    if (params.Gid != ""){
+        if (params.Gid != dataRecord.Gid) {
+            return false
+        }
+    }
+
+    isFound := false
+    if (len(params.Members) != 0){
+        for _, paramMember := range params.Members {
+            isFound = false
+            for _, dataRecordMember := range dataRecord.Members {
+                if (dataRecordMember == paramMember) {
+                    isFound = true
+                }
+            }
+            if isFound == false{
+                return false
+            }
+        }
+    }
+
+    return true
+}
+
+func retrieveGroupInfoFromGid( csvData [][]string, gid string) (matchingEntryPtr *GroupInfo, err error) {
+
+	var matchingEntry GroupInfo
+	matchingEntryPtr = nil
+	for index, each := range csvData {
+
+		if each[0][0] == '#' {
+			continue
+		}
+
+        err = validateEntryInGroupFile(len(each), index)
+        if err != nil {
+            matchingEntryPtr = nil
+            break
+        }
+
+		if each[2] == gid {
+			matchingEntry.Name = each[0]
+			matchingEntry.Gid = each[2]
+			matchingEntry.Members = strings.Split(each[3], ",")
+			matchingEntryPtr = &matchingEntry
+			break
+		}
+	}
+	return matchingEntryPtr, err
+}

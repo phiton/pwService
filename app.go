@@ -34,8 +34,8 @@ func (a *App) InitializeRoutes() {
 
     a.Router.HandleFunc("/users/{uid}/groups", a.getUidGroupInfo).Methods("GET")
     a.Router.HandleFunc("/groups", a.getAllGroupInfos).Methods("GET")
-    // a.Router.HandleFunc("/groups/query", queryGroupInfos).Methods("GET")
-    // a.Router.HandleFunc("/groups/{gid}", gidGroup).Methods("GET")
+    a.Router.HandleFunc("/groups/query", a.getQueryGroupInfos).Methods("GET")
+    a.Router.HandleFunc("/groups/{gid}", a.getGidGroup).Methods("GET")
 }
 
 func (a *App) getHomePage(w http.ResponseWriter, r *http.Request) {
@@ -193,5 +193,74 @@ func (a *App) getAllGroupInfos(w http.ResponseWriter, r *http.Request) {
         fmt.Fprintf(w, err.Error())
     }else if allGroupEntries != nil {
 		printJSON(w, allGroupEntries)
+	}
+}
+
+func (a *App) getQueryGroupInfos(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET Endpoint Hit: /groups/query")
+
+	urlQueryParams := r.URL.Query()
+
+	invalidParams := validateGroupParams(urlQueryParams)
+	if len(invalidParams) != 0 {
+        invalidParamsString := strings.Join(invalidParams, " ")
+		fmt.Fprintf(w, "Error! invalid query parameters given: " + invalidParamsString)
+		fmt.Println("Error! invalid query parameters given: " + invalidParamsString)
+		return
+	}
+
+	var queriedParams GroupInfo
+    var memberValues []string
+	queriedParams.Name = urlQueryParams.Get("name")
+	queriedParams.Gid = urlQueryParams.Get("gid")
+
+    for mapKey, mapValue := range urlQueryParams {
+        if mapKey == "member"{
+            memberValues = mapValue
+        }
+    }
+    queriedParams.Members = memberValues
+
+	csvData,err := getFileData(a.GroupPath)
+    if err != nil {
+		errorMsg := a.GroupPath + " file does not exist or can't be read" +
+			" on this system"
+		fmt.Fprintf(w, errorMsg)
+		fmt.Println(err)
+        return
+	}
+
+	queriedEntries, err := decodeGroupWithQuery(csvData, queriedParams)
+	if queriedEntries != nil && len(queriedEntries) != 0 {
+		printJSON(w, queriedEntries)
+	} else {
+		fmt.Fprintf(w, " Unable to find matching entry with given query")
+	}
+
+}
+
+func (a *App) getGidGroup(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET Endpoint Hit: /groups/{gid}")
+
+	csvDataGroups,err := getFileData(a.GroupPath)
+    if err != nil {
+		errorMsg := a.GroupPath + " file does not exist or can't be read" +
+			" on this system"
+		fmt.Fprintf(w, errorMsg)
+		fmt.Println(err)
+        return
+	}
+
+	vars := mux.Vars(r)
+	gid := vars["gid"]
+
+	myGroupInfo, err := retrieveGroupInfoFromGid( csvDataGroups, gid)
+    if err != nil {
+        fmt.Println(err.Error())
+    }
+	if myGroupInfo != nil {
+		printJSON(w, myGroupInfo)
+	} else {
+		fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with gid="+gid)
 	}
 }
