@@ -7,6 +7,9 @@ import (
 )
 
 var passwdTestPath string = "./testFiles/passwdTest"
+var malformedPasswdTestPath string = "./testFiles/malformedPasswdTest"
+var groupTestPath string = "./testFiles/groupTest"
+var malformedGroupTestPath string = "./testFiles/malformedGroupTest"
 var fileNotExistPath string = "./testFiles/fileNotExist"
 
 func TestGetFileData(t* testing.T) {
@@ -121,4 +124,20 @@ func TestRetrieveUserInfoFromUid(t* testing.T) {
     if myUserInfo.Shell != "/usr/bin/false" {
         t.Errorf("Incorrect Shell picked up from passwdTestPath. Expected: /usr/bin/false, Actual: " +myUserInfo.Shell)
     }
+}
+
+func TestRetrieveGroupsFromUser(t* testing.T) {
+    csvData, _ := getFileData(groupTestPath)
+    myUserName := "root"
+    myUserGroupInfos, err := retrieveGroupsFromUser(csvData, myUserName)
+    if (len(myUserGroupInfos) != 2){
+        t.Errorf("Did not receive appropriate count for username root. Expected: 2, Actual: " + strconv.Itoa(len(myUserGroupInfos)))
+    }
+
+    csvData, _ = getFileData(malformedGroupTestPath)
+    myUserGroupInfos, err = retrieveGroupsFromUser(csvData, myUserName)
+    if err == nil {
+        t.Errorf("Error was not hit with malformedGroupTest file Expected:Error! passwd file may be corrupt!, Actual: nil ")
+    }
+
 }

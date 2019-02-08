@@ -9,6 +9,7 @@ import (
     "errors"
     "net/http"
     "strconv"
+    "strings"
 )
 func printJSON(w http.ResponseWriter, allEntries interface{}) {
 	jsonEntry := json.NewEncoder(w)
@@ -68,7 +69,7 @@ func decodePasswdWithQuery( csvData [][]string, params UserInfo) (queriedEntries
 			continue
 		}
 
-        err := validateEntryInPasswdFile(len(each), index)
+        err = validateEntryInPasswdFile(len(each), index)
         if err != nil {
             queriedEntries = nil
             break
@@ -131,13 +132,14 @@ func retrieveUserInfoFromUid(csvData [][]string, uid string) (matchingEntryPtr *
 
 	var matchingEntry UserInfo
 	matchingEntryPtr = nil
+
 	for index, each := range csvData {
 
 		if each[0][0] == '#' {
 			continue
 		}
 
-        err := validateEntryInPasswdFile(len(each), index)
+        err = validateEntryInPasswdFile(len(each), index)
         if err != nil {
             matchingEntryPtr = nil
             break
@@ -155,4 +157,43 @@ func retrieveUserInfoFromUid(csvData [][]string, uid string) (matchingEntryPtr *
 		}
 	}
 	return matchingEntryPtr, err
+}
+
+func retrieveGroupsFromUser( csvData [][]string, userName string) (groupEntries GroupInfos, err error) {
+	var oneEntry GroupInfo
+	var foundMatch bool
+
+	for index, each := range csvData {
+
+		foundMatch = false
+		if each[0][0] == '#' {
+			continue
+		}
+
+        err = validateEntryInGroupFile(len(each), index)
+        if err != nil {
+            groupEntries = nil
+            break
+        }
+
+		oneEntry.Name = each[0]
+		oneEntry.Gid = each[2]
+		// Not all Gid matches from /etc/passwd show up in /etc/group file...
+		// if we want to add the primary Gid from /etc/passwd, we will need to compare
+		// it with this Gid and if they match, include it in the groupEntries
+
+		oneEntry.Members = strings.Split(each[3], ",")
+
+		for _, element := range oneEntry.Members {
+			if element == userName {
+				foundMatch = true
+			}
+		}
+
+		if foundMatch == true {
+			groupEntries = append(groupEntries, oneEntry)
+		}
+
+	}
+	return groupEntries, err
 }

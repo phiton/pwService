@@ -1,0 +1,9 @@
+##
+# Group Database
+# 
+# Note that this file is consulted directly only when the system is running
+# test sample of bad group file
+##
+nobody:*:-2:
+nogroup:*:-1
+sys:*:3:root:har:har

@@ -1,0 +1,6 @@
+# test sample of what group file can look like
+##
+nobody:*:-2:
+nogroup:*:-1:
+wheel:*:0:root
+chow:*:3:root

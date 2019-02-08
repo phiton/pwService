@@ -31,8 +31,8 @@ func (a *App) InitializeRoutes() {
     a.Router.HandleFunc("/users", a.getAllUserInfos).Methods("GET")
     a.Router.HandleFunc("/users/query", a.getQueryUserInfos).Methods("GET")
     a.Router.HandleFunc("/users/{uid}", a.getUidUser).Methods("GET")
-    //
-    // a.Router.HandleFunc("/users/{uid}/groups", uidGroupInfo).Methods("GET")
+
+    a.Router.HandleFunc("/users/{uid}/groups", a.getUidGroupInfo).Methods("GET")
     // a.Router.HandleFunc("/groups", allGroupInfos).Methods("GET")
     // a.Router.HandleFunc("/groups/query", queryGroupInfos).Methods("GET")
     // a.Router.HandleFunc("/groups/{gid}", gidGroup).Methods("GET")
@@ -121,9 +121,57 @@ func (a *App) getUidUser(w http.ResponseWriter, r *http.Request) {
 	uid := vars["uid"]
 
 	myUserInfo, err := retrieveUserInfoFromUid(csvData, uid)
+    if err != nil {
+        fmt.Println(err.Error())
+    }
 	if myUserInfo != nil {
         printJSON(w, myUserInfo)
 	} else {
 		fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with uid="+uid)
+	}
+}
+
+func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET Endpoint Hit: /users/{uid}/groups")
+
+	csvDataPasswd, err := getFileData(a.PasswordPath)
+    if err != nil {
+		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
+			" on this system"
+		fmt.Fprintf(w, errorMsg)
+		fmt.Println(err)
+        return
+	}
+	csvDataGroups, err := getFileData(a.GroupPath)
+    if err != nil {
+		errorMsg := a.GroupPath + " file does not exist or can't be read" +
+			" on this system"
+		fmt.Fprintf(w, errorMsg)
+		fmt.Println(err)
+        return
+	}
+	vars := mux.Vars(r)
+	uid := vars["uid"]
+
+	myUserInfo, err := retrieveUserInfoFromUid(csvDataPasswd, uid)
+    if err != nil {
+        fmt.Println( err.Error())
+    }
+
+	if myUserInfo != nil {
+		myUserName := (*myUserInfo).Name
+
+		myUserGroupInfos, err := retrieveGroupsFromUser(csvDataGroups, myUserName)
+        if err != nil {
+            fmt.Fprintf(w, err.Error())
+        }
+
+		if myUserGroupInfos != nil && len(myUserGroupInfos) > 0 {
+            printJSON(w, myUserGroupInfos)
+		} else {
+            fmt.Fprintf(w, "No Groups found for given user")
+        }
+	} else {
+		fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with uid="+uid + " in " + a.PasswordPath)
 	}
 }
