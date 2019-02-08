@@ -41,6 +41,15 @@ func TestDecodePasswd(t* testing.T) {
     if len(allEntries) != 2 {
         t.Errorf ("passwdTest file gave back more entries than expected. Expected: 2, Actual:" + strconv.Itoa(len(allEntries)))
     }
+
+    passwdData, err = getFileData(malformedPasswdTestPath)
+    allEntries, err = decodePasswd(passwdData)
+    if err == nil {
+        t.Errorf ("Error about corrupted passwd did not hit as expected")
+    }
+    if len(allEntries) != 0 {
+        t.Errorf ("Number of entries mismatched. Expected: 0, Actual: " + strconv.Itoa(len(allEntries)))
+    }
 }
 
 func TestDecodePasswdWithQuery(t* testing.T) {
@@ -140,4 +149,24 @@ func TestRetrieveGroupsFromUser(t* testing.T) {
         t.Errorf("Error was not hit with malformedGroupTest file Expected:Error! passwd file may be corrupt!, Actual: nil ")
     }
 
+}
+
+func TestDecodeGroup(t* testing.T) {
+    groupData, err := getFileData(groupTestPath)
+    allEntries, err := decodeGroup(groupData)
+    if err != nil {
+        t.Errorf ("Unexpected error hit when decoding test data: " + err.Error())
+    }
+    if len(allEntries) != 4 {
+        t.Errorf ("passwdTest file gave back more entries than expected. Expected: 4, Actual:" + strconv.Itoa(len(allEntries)))
+    }
+
+    groupData, err = getFileData(malformedGroupTestPath)
+    allEntries, err = decodeGroup(groupData)
+    if err == nil {
+        t.Errorf("Error about corrupted group did not hit as expected")
+    }
+    if len(allEntries) != 0 {
+        t.Errorf ("Number of entries mismatched. Expected: 0, Actual: " + strconv.Itoa(len(allEntries)))
+    }
 }

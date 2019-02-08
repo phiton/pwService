@@ -33,7 +33,7 @@ func (a *App) InitializeRoutes() {
     a.Router.HandleFunc("/users/{uid}", a.getUidUser).Methods("GET")
 
     a.Router.HandleFunc("/users/{uid}/groups", a.getUidGroupInfo).Methods("GET")
-    // a.Router.HandleFunc("/groups", allGroupInfos).Methods("GET")
+    a.Router.HandleFunc("/groups", a.getAllGroupInfos).Methods("GET")
     // a.Router.HandleFunc("/groups/query", queryGroupInfos).Methods("GET")
     // a.Router.HandleFunc("/groups/{gid}", gidGroup).Methods("GET")
 }
@@ -173,5 +173,25 @@ func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
         }
 	} else {
 		fmt.Fprintf(w, "404 page not found. \nUnable to find matching entry with uid="+uid + " in " + a.PasswordPath)
+	}
+}
+
+func (a *App) getAllGroupInfos(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("GET Endpoint Hit: /groups")
+
+	csvData,err := getFileData(a.GroupPath)
+    if err != nil {
+		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
+			" on this system"
+		fmt.Fprintf(w, errorMsg)
+		fmt.Println(err)
+        return
+	}
+
+	allGroupEntries, err := decodeGroup(csvData)
+    if err != nil {
+        fmt.Fprintf(w, err.Error())
+    }else if allGroupEntries != nil {
+		printJSON(w, allGroupEntries)
 	}
 }

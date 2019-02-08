@@ -37,7 +37,7 @@ func validateEntryInPasswdFile (entryLength int, index int) (err error) {
 func validateEntryInGroupFile (entryLength int, index int) (err error) {
     err = nil
     if entryLength != 4 {
-        errString :=  "Error! passwd file may be corrupt! Found entry with " +
+        errString :=  "Error! group file may be corrupt! Found entry with " +
                        strconv.Itoa(entryLength) + " fields on line:" + strconv.Itoa(index+1)
         err = errors.New(errString)
     }
