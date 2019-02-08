@@ -3,18 +3,20 @@
 
 pwService has two optional parameters at the commandline which allows the user to customize the location of the groups and password file of the machine. If the parameters are not present, the default location will be set to /etc/passwd and /etc/group.
 
-Prerequisites:
+# Prerequisites:
   1. GoLang installed
   2. get gorilla/mux by issuing the following command on mac: go get -u github.com/gorilla/mux
 
-How to run the Service:
+# How to run the Service:
 1. Build the executable with the "go build" command while in the main directory.
 2. Run the pwService executable: "./pwService". There is also the -h option: "./pwService -h" to see the help menu
 3. Optional parameters can be used to configure the passwd and group file location. To configure the file locations, the command would look like "./pwService -p=<pathOfPasswdFile> -g=<pathOfGroupFile>"
       ex: ./pwService -p=/etc/myPasswdFile -g=/etc/myGroupFile
   
-How to access the service:
-The service can be accessed via any webbrowser and runs on port 8081. The url will be localhost:8081. Here are the available methods:
+# How to access the service:
+The service can be accessed via any webbrowser and runs on port 8081. The url will be localhost:8081.
+
+# Available methods:
  
 GET /users
 Return a list of all users on the system, as defined in the /etc/passwd file.
