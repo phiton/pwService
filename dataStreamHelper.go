@@ -12,62 +12,62 @@ import (
     "strings"
 )
 func printJSON(w http.ResponseWriter, allEntries interface{}) {
-	jsonEntry := json.NewEncoder(w)
-	jsonEntry.SetIndent("", "    ")    //For pretty print
-	jsonEntry.Encode(allEntries)
+    jsonEntry := json.NewEncoder(w)
+    jsonEntry.SetIndent("", "    ")    //For pretty print
+    jsonEntry.Encode(allEntries)
 }
 
 func getFileData( filePath string) (csvData [][]string, err error) {
-	csvFile, err := os.Open(filePath)
-	if err != nil {
-		fmt.Println(err)
-	}
+    csvFile, err := os.Open(filePath)
+    if err != nil {
+        fmt.Println(err)
+    }
 
-	defer csvFile.Close()
+    defer csvFile.Close()
 
-	reader := csv.NewReader(csvFile)
-	reader.Comma = ':'
-	reader.FieldsPerRecord = -1
+    reader := csv.NewReader(csvFile)
+    reader.Comma = ':'
+    reader.FieldsPerRecord = -1
 
-	return reader.ReadAll()
+    return reader.ReadAll()
 }
 
 
 func decodePasswd(csvData [][]string) (allEntries UserInfos, err error) {
 
-	var oneEntry UserInfo
-	for index, each := range csvData {
+    var oneEntry UserInfo
+    for index, each := range csvData {
 
-		if each[0][0] == '#' {
-			continue
-		}
+        if each[0][0] == '#' {
+            continue
+        }
 
-		if len(each) != 7 {
+        if len(each) != 7 {
             errString := "Error! passwd file may be corrupt! Found entry with " +
                           strconv.Itoa(len(each)) + " fields on line:" + strconv.Itoa(index+1)
-			err = errors.New(errString)
-			allEntries = nil
-			break
-		}
-		oneEntry.Name = each[0]
-		oneEntry.Uid = each[2]
-		oneEntry.Gid = each[3]
-		oneEntry.Comment = each[4]
-		oneEntry.Home = each[5]
-		oneEntry.Shell = each[6]
-		allEntries = append(allEntries, oneEntry)
-	}
-	return allEntries, err
+            err = errors.New(errString)
+            allEntries = nil
+            break
+        }
+        oneEntry.Name = each[0]
+        oneEntry.Uid = each[2]
+        oneEntry.Gid = each[3]
+        oneEntry.Comment = each[4]
+        oneEntry.Home = each[5]
+        oneEntry.Shell = each[6]
+        allEntries = append(allEntries, oneEntry)
+    }
+    return allEntries, err
 }
 
 func decodePasswdWithQuery( csvData [][]string, params UserInfo) (queriedEntries UserInfos, err error) {
-	var oneEntry UserInfo
+    var oneEntry UserInfo
 
-	for index, each := range csvData {
+    for index, each := range csvData {
 
-		if each[0][0] == '#' {
-			continue
-		}
+        if each[0][0] == '#' {
+            continue
+        }
 
         err = validateEntryInPasswdFile(len(each), index)
         if err != nil {
@@ -75,69 +75,69 @@ func decodePasswdWithQuery( csvData [][]string, params UserInfo) (queriedEntries
             break
         }
 
-		oneEntry.Name = each[0]
-		oneEntry.Uid = each[2]
-		oneEntry.Gid = each[3]
-		oneEntry.Comment = each[4]
-		oneEntry.Home = each[5]
-		oneEntry.Shell = each[6]
+        oneEntry.Name = each[0]
+        oneEntry.Uid = each[2]
+        oneEntry.Gid = each[3]
+        oneEntry.Comment = each[4]
+        oneEntry.Home = each[5]
+        oneEntry.Shell = each[6]
 
-		isMatch := compareUserInfo(params, oneEntry)
+        isMatch := compareUserInfo(params, oneEntry)
 
-		if isMatch {
-			queriedEntries = append(queriedEntries, oneEntry)
-		}
-	}
-	return queriedEntries, err
+        if isMatch {
+            queriedEntries = append(queriedEntries, oneEntry)
+        }
+    }
+    return queriedEntries, err
 
 }
 
 func compareUserInfo(params UserInfo, dataRecord UserInfo) (isMatch bool) {
 
-	if params.Name != "" {
-		if params.Name != dataRecord.Name {
-			return false
-		}
-	}
-	if params.Uid != "" {
-		if params.Uid != dataRecord.Uid {
-			return false
-		}
-	}
-	if params.Gid != "" {
-		if params.Gid != dataRecord.Uid {
-			return false
-		}
-	}
-	if params.Comment != "" {
-		if params.Comment != dataRecord.Comment {
-			return false
-		}
-	}
-	if params.Home != "" {
-		if params.Home != dataRecord.Home {
-			return false
-		}
-	}
-	if params.Shell != "" {
-		if params.Shell != dataRecord.Shell {
-			return false
-		}
-	}
+    if params.Name != "" {
+        if params.Name != dataRecord.Name {
+            return false
+        }
+    }
+    if params.Uid != "" {
+        if params.Uid != dataRecord.Uid {
+            return false
+        }
+    }
+    if params.Gid != "" {
+        if params.Gid != dataRecord.Uid {
+            return false
+        }
+    }
+    if params.Comment != "" {
+        if params.Comment != dataRecord.Comment {
+            return false
+        }
+    }
+    if params.Home != "" {
+        if params.Home != dataRecord.Home {
+            return false
+        }
+    }
+    if params.Shell != "" {
+        if params.Shell != dataRecord.Shell {
+            return false
+        }
+    }
 
-	return true
+    return true
 }
 
 func retrieveUserInfoFromUid(csvData [][]string, uid string) (matchingEntryPtr *UserInfo, err error) {
 
-	var matchingEntry UserInfo
-	matchingEntryPtr = nil
+    var matchingEntry UserInfo
+    matchingEntryPtr = nil
 
-	for index, each := range csvData {
+    for index, each := range csvData {
 
-		if each[0][0] == '#' {
-			continue
-		}
+        if each[0][0] == '#' {
+            continue
+        }
 
         err = validateEntryInPasswdFile(len(each), index)
         if err != nil {
@@ -145,30 +145,30 @@ func retrieveUserInfoFromUid(csvData [][]string, uid string) (matchingEntryPtr *
             break
         }
 
-		if each[2] == uid {
-			matchingEntry.Name = each[0]
-			matchingEntry.Uid = each[2]
-			matchingEntry.Gid = each[3]
-			matchingEntry.Comment = each[4]
-			matchingEntry.Home = each[5]
-			matchingEntry.Shell = each[6]
-			matchingEntryPtr = &matchingEntry
-			break
-		}
-	}
-	return matchingEntryPtr, err
+        if each[2] == uid {
+            matchingEntry.Name = each[0]
+            matchingEntry.Uid = each[2]
+            matchingEntry.Gid = each[3]
+            matchingEntry.Comment = each[4]
+            matchingEntry.Home = each[5]
+            matchingEntry.Shell = each[6]
+            matchingEntryPtr = &matchingEntry
+            break
+        }
+    }
+    return matchingEntryPtr, err
 }
 
 func retrieveGroupsFromUser( csvData [][]string, userName string) (groupEntries GroupInfos, err error) {
-	var oneEntry GroupInfo
-	var foundMatch bool
+    var oneEntry GroupInfo
+    var foundMatch bool
 
-	for index, each := range csvData {
+    for index, each := range csvData {
 
-		foundMatch = false
-		if each[0][0] == '#' {
-			continue
-		}
+        foundMatch = false
+        if each[0][0] == '#' {
+            continue
+        }
 
         err = validateEntryInGroupFile(len(each), index)
         if err != nil {
@@ -176,36 +176,36 @@ func retrieveGroupsFromUser( csvData [][]string, userName string) (groupEntries 
             break
         }
 
-		oneEntry.Name = each[0]
-		oneEntry.Gid = each[2]
-		// Not all Gid matches from /etc/passwd show up in /etc/group file...
-		// if we want to add the primary Gid from /etc/passwd, we will need to compare
-		// it with this Gid and if they match, include it in the groupEntries
+        oneEntry.Name = each[0]
+        oneEntry.Gid = each[2]
+        // Not all Gid matches from /etc/passwd show up in /etc/group file...
+        // if we want to add the primary Gid from /etc/passwd, we will need to compare
+        // it with this Gid and if they match, include it in the groupEntries
 
-		oneEntry.Members = strings.Split(each[3], ",")
+        oneEntry.Members = strings.Split(each[3], ",")
 
-		for _, element := range oneEntry.Members {
-			if element == userName {
-				foundMatch = true
-			}
-		}
+        for _, element := range oneEntry.Members {
+            if element == userName {
+                foundMatch = true
+            }
+        }
 
-		if foundMatch == true {
-			groupEntries = append(groupEntries, oneEntry)
-		}
+        if foundMatch == true {
+            groupEntries = append(groupEntries, oneEntry)
+        }
 
-	}
-	return groupEntries, err
+    }
+    return groupEntries, err
 }
 
 func decodeGroup( csvData [][]string) (groupEntries GroupInfos, err error) {
-	var oneEntry GroupInfo
+    var oneEntry GroupInfo
 
-	for index, each := range csvData {
+    for index, each := range csvData {
 
-		if each[0][0] == '#' {
-			continue
-		}
+        if each[0][0] == '#' {
+            continue
+        }
 
         err = validateEntryInGroupFile(len(each), index)
         if err != nil {
@@ -213,46 +213,46 @@ func decodeGroup( csvData [][]string) (groupEntries GroupInfos, err error) {
             break
         }
 
-		oneEntry.Name = each[0]
-		oneEntry.Gid = each[2]
-		// Not all Gid matches from /etc/passwd show up in /etc/group file...
-		// if we want to add the primary Gid from /etc/passwd, we will need to compare
-		// it with this Gid and if they match, include it in the groupEntries
+        oneEntry.Name = each[0]
+        oneEntry.Gid = each[2]
+        // Not all Gid matches from /etc/passwd show up in /etc/group file...
+        // if we want to add the primary Gid from /etc/passwd, we will need to compare
+        // it with this Gid and if they match, include it in the groupEntries
 
-		oneEntry.Members = strings.Split(each[3], ",")
+        oneEntry.Members = strings.Split(each[3], ",")
 
-		groupEntries = append(groupEntries, oneEntry)
+        groupEntries = append(groupEntries, oneEntry)
 
-	}
-	return groupEntries, err
+    }
+    return groupEntries, err
 }
 
 func decodeGroupWithQuery(csvData [][]string,  params GroupInfo) (queriedEntries GroupInfos, err error) {
-	var oneEntry GroupInfo
+    var oneEntry GroupInfo
 
-	for index, each := range csvData {
+    for index, each := range csvData {
 
-		if each[0][0] == '#' {
-			continue
-		}
+        if each[0][0] == '#' {
+            continue
+        }
 
-		err = validateEntryInGroupFile(len(each), index)
+        err = validateEntryInGroupFile(len(each), index)
         if err != nil {
             queriedEntries = nil
             break
         }
 
-		oneEntry.Name = each[0]
-		oneEntry.Gid = each[2]
-		oneEntry.Members = strings.Split(each[3], ",")
+        oneEntry.Name = each[0]
+        oneEntry.Gid = each[2]
+        oneEntry.Members = strings.Split(each[3], ",")
 
-		isMatch := compareGroupInfo(params, oneEntry)
+        isMatch := compareGroupInfo(params, oneEntry)
 
-		if (isMatch){
-		    queriedEntries = append(queriedEntries, oneEntry)
-		}
-	}
-	return queriedEntries, err
+        if (isMatch){
+            queriedEntries = append(queriedEntries, oneEntry)
+        }
+    }
+    return queriedEntries, err
 
 }
 
@@ -289,13 +289,13 @@ func compareGroupInfo (params GroupInfo, dataRecord GroupInfo) (isMatch bool) {
 
 func retrieveGroupInfoFromGid( csvData [][]string, gid string) (matchingEntryPtr *GroupInfo, err error) {
 
-	var matchingEntry GroupInfo
-	matchingEntryPtr = nil
-	for index, each := range csvData {
+    var matchingEntry GroupInfo
+    matchingEntryPtr = nil
+    for index, each := range csvData {
 
-		if each[0][0] == '#' {
-			continue
-		}
+        if each[0][0] == '#' {
+            continue
+        }
 
         err = validateEntryInGroupFile(len(each), index)
         if err != nil {
@@ -303,13 +303,13 @@ func retrieveGroupInfoFromGid( csvData [][]string, gid string) (matchingEntryPtr
             break
         }
 
-		if each[2] == gid {
-			matchingEntry.Name = each[0]
-			matchingEntry.Gid = each[2]
-			matchingEntry.Members = strings.Split(each[3], ",")
-			matchingEntryPtr = &matchingEntry
-			break
-		}
-	}
-	return matchingEntryPtr, err
+        if each[2] == gid {
+            matchingEntry.Name = each[0]
+            matchingEntry.Gid = each[2]
+            matchingEntry.Members = strings.Split(each[3], ",")
+            matchingEntryPtr = &matchingEntry
+            break
+        }
+    }
+    return matchingEntryPtr, err
 }

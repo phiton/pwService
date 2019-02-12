@@ -6,41 +6,41 @@ import (
 )
 
 func validateUserParams(params map[string][]string) (invalidStrings []string) {
-	validParams := [6]string{"name", "uid", "gid", "comment", "home", "shell"}
-	isValid := false
+    validParams := [6]string{"name", "uid", "gid", "comment", "home", "shell"}
+    isValid := false
 
-	for mapKey := range params {
+    for mapKey := range params {
         isValid = false
-		for _, validParam := range validParams {
-			if mapKey == validParam {
-				isValid = true
-			}
-		}
-		if isValid == false {
-			invalidStrings = append(invalidStrings, mapKey)
-		}
-	}
+        for _, validParam := range validParams {
+            if mapKey == validParam {
+                isValid = true
+            }
+        }
+        if isValid == false {
+            invalidStrings = append(invalidStrings, mapKey)
+        }
+    }
 
-	return invalidStrings
+    return invalidStrings
 }
 
 func validateGroupParams(params map[string][]string) (invalidStrings []string) {
-	validParams := [3]string{"name", "gid", "member"}
-	isValid := false
+    validParams := [3]string{"name", "gid", "member"}
+    isValid := false
 
-	for mapKey := range params {
+    for mapKey := range params {
         isValid = false
-		for _, validParam := range validParams {
-			if mapKey == validParam {
-				isValid = true
-			}
-		}
-		if isValid == false {
-			invalidStrings = append(invalidStrings, mapKey)
-		}
-	}
+        for _, validParam := range validParams {
+            if mapKey == validParam {
+                isValid = true
+            }
+        }
+        if isValid == false {
+            invalidStrings = append(invalidStrings, mapKey)
+        }
+    }
 
-	return invalidStrings
+    return invalidStrings
 }
 
 func validateEntryInPasswdFile (entryLength int, index int) (err error) {
