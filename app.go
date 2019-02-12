@@ -85,7 +85,7 @@ func (a *App) getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
 	queriedParams.Home = urlQueryParams.Get("home")
 	queriedParams.Shell = urlQueryParams.Get("shell")
 
-	csvData, err := getFileData(a.PasswordPath)
+	passwdData, err := getFileData(a.PasswordPath)
     if err != nil {
 		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
 			" on this system"
@@ -94,7 +94,7 @@ func (a *App) getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
         return
 	}
 
-	queriedEntries, err := decodePasswdWithQuery(csvData, queriedParams)
+	queriedEntries, err := decodePasswdWithQuery(passwdData, queriedParams)
     if err != nil {
         fmt.Fprintf(w, err.Error())
     } else if queriedEntries != nil && len(queriedEntries) != 0 {
@@ -108,7 +108,7 @@ func (a *App) getQueryUserInfos(w http.ResponseWriter, r *http.Request) {
 func (a *App) getUidUser(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET Endpoint Hit: /users/{uid}")
 
-	csvData, err := getFileData(a.PasswordPath)
+	passwdData, err := getFileData(a.PasswordPath)
     if err != nil {
 		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
 			" on this system"
@@ -120,7 +120,7 @@ func (a *App) getUidUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid := vars["uid"]
 
-	myUserInfo, err := retrieveUserInfoFromUid(csvData, uid)
+	myUserInfo, err := retrieveUserInfoFromUid(passwdData, uid)
     if err != nil {
         fmt.Println(err.Error())
     }
@@ -134,7 +134,7 @@ func (a *App) getUidUser(w http.ResponseWriter, r *http.Request) {
 func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET Endpoint Hit: /users/{uid}/groups")
 
-	csvDataPasswd, err := getFileData(a.PasswordPath)
+	passwdData, err := getFileData(a.PasswordPath)
     if err != nil {
 		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
 			" on this system"
@@ -142,7 +142,7 @@ func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
 		fmt.Println(err)
         return
 	}
-	csvDataGroups, err := getFileData(a.GroupPath)
+	groupsData, err := getFileData(a.GroupPath)
     if err != nil {
 		errorMsg := a.GroupPath + " file does not exist or can't be read" +
 			" on this system"
@@ -153,7 +153,7 @@ func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid := vars["uid"]
 
-	myUserInfo, err := retrieveUserInfoFromUid(csvDataPasswd, uid)
+	myUserInfo, err := retrieveUserInfoFromUid(passwdData, uid)
     if err != nil {
         fmt.Println( err.Error())
     }
@@ -161,7 +161,7 @@ func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
 	if myUserInfo != nil {
 		myUserName := (*myUserInfo).Name
 
-		myUserGroupInfos, err := retrieveGroupsFromUser(csvDataGroups, myUserName)
+		myUserGroupInfos, err := retrieveGroupsFromUser(groupsData, myUserName)
         if err != nil {
             fmt.Fprintf(w, err.Error())
         }
@@ -179,16 +179,16 @@ func (a *App)getUidGroupInfo(w http.ResponseWriter, r *http.Request) {
 func (a *App) getAllGroupInfos(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET Endpoint Hit: /groups")
 
-	csvData,err := getFileData(a.GroupPath)
+	groupData,err := getFileData(a.GroupPath)
     if err != nil {
-		errorMsg := a.PasswordPath + " file does not exist or can't be read" +
+		errorMsg := a.GroupPath + " file does not exist or can't be read" +
 			" on this system"
 		fmt.Fprintf(w, errorMsg)
 		fmt.Println(err)
         return
 	}
 
-	allGroupEntries, err := decodeGroup(csvData)
+	allGroupEntries, err := decodeGroup(groupData)
     if err != nil {
         fmt.Fprintf(w, err.Error())
     }else if allGroupEntries != nil {
@@ -221,7 +221,7 @@ func (a *App) getQueryGroupInfos(w http.ResponseWriter, r *http.Request) {
     }
     queriedParams.Members = memberValues
 
-	csvData,err := getFileData(a.GroupPath)
+	groupData,err := getFileData(a.GroupPath)
     if err != nil {
 		errorMsg := a.GroupPath + " file does not exist or can't be read" +
 			" on this system"
@@ -230,7 +230,7 @@ func (a *App) getQueryGroupInfos(w http.ResponseWriter, r *http.Request) {
         return
 	}
 
-	queriedEntries, err := decodeGroupWithQuery(csvData, queriedParams)
+	queriedEntries, err := decodeGroupWithQuery(groupData, queriedParams)
 	if queriedEntries != nil && len(queriedEntries) != 0 {
 		printJSON(w, queriedEntries)
 	} else {
@@ -242,7 +242,7 @@ func (a *App) getQueryGroupInfos(w http.ResponseWriter, r *http.Request) {
 func (a *App) getGidGroup(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("GET Endpoint Hit: /groups/{gid}")
 
-	csvDataGroups,err := getFileData(a.GroupPath)
+	groupData,err := getFileData(a.GroupPath)
     if err != nil {
 		errorMsg := a.GroupPath + " file does not exist or can't be read" +
 			" on this system"
@@ -254,7 +254,7 @@ func (a *App) getGidGroup(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	gid := vars["gid"]
 
-	myGroupInfo, err := retrieveGroupInfoFromGid( csvDataGroups, gid)
+	myGroupInfo, err := retrieveGroupInfoFromGid( groupData, gid)
     if err != nil {
         fmt.Println(err.Error())
     }
